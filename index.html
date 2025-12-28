@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmIntel Pro | Smart Agriculture Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #2e7d32; --primary-light: #e8f5e9; --secondary: #ffa000; --text-main: #37474f; --white: #ffffff; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #f4f7f6; color: var(--text-main); margin: 0; padding: 0; }
+
+        header { background: var(--white); border-bottom: 1px solid #e0e0e0; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .lang-toggle { background: var(--primary-light); border: 1px solid var(--primary); color: var(--primary); padding: 5px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+
+        .main-wrapper { max-width: 1100px; margin: 0 auto; padding: 20px 15px; display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+
+        @media (max-width: 900px) { .main-wrapper { grid-template-columns: 1fr; } }
+
+        .card { background: var(--white); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .card h2 { margin-top: 0; font-size: 1.25rem; color: var(--primary); border-bottom: 2px solid var(--primary-light); padding-bottom: 10px; margin-bottom: 20px; }
+        
+        .input-group { margin-bottom: 18px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #546e7a; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #eceff1; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-size: 1rem; font-weight: 700; cursor: pointer; }
+        .btn-submit { background: #333; margin-top: 10px; }
+
+        footer { background: #263238; color: #cfd8dc; padding: 40px 5% 20px; margin-top: 50px; }
+        .footer-content { max-width: 1100px; margin: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
+        .footer-links a { color: #81c784; text-decoration: none; display: block; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="#" class="logo"><span>🌾</span> FarmIntel Pro</a>
+    <button class="lang-toggle" onclick="toggleLang()">हिन्दी / EN</button>
+</header>
+
+<div class="main-wrapper">
+    <div id="capture-area">
+        <div class="card">
+            <h2 id="t-finance">💰 Quick Profit Analysis</h2>
+            <div class="input-group">
+                <label id="l-area">Land Area (Acres)</label>
+                <input type="number" id="acres" value="1" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label id="l-crop">Crop</label>
+                <select id="crop" onchange="calculate()">
+                    <option value="maize">Maize / मक्का</option>
+                    <option value="rice">Rice / चावल</option>
+                </select>
+            </div>
+            <div style="background: var(--primary-light); padding: 20px; border-radius: 12px; text-align: center;">
+                <small id="l-net">Net Profit</small>
+                <h2 id="res-net" style="margin:0; font-size: 2rem;">₹0</h2>
+            </div>
+            <br>
+            <button class="btn-primary" onclick="exportPDF()" id="btn-pdf">📥 Download Financial Report</button>
+        </div>
+    </div>
+
+    <aside>
+        <div class="card">
+            <h2 id="t-contact">✉️ Expert Advice</h2>
+            <p style="font-size: 0.8rem; color: #666; margin-top: -15px;">Have questions? Message our agri-experts.</p>
+            
+            <form action="https://formspree.io/f/your-email@example.com" method="POST">
+                <div class="input-group">
+                    <label>Your Name</label>
+                    <input type="text" name="name" placeholder="Farmer Name" required>
+                </div>
+                <div class="input-group">
+                    <label>Phone/Email</label>
+                    <input type="text" name="contact" placeholder="How to reach you" required>
+                </div>
+                <div class="input-group">
+                    <label>Your Question</label>
+                    <textarea name="message" rows="3" placeholder="Ask about soil, seeds, or loans..." required></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-submit">Send Message</button>
+            </form>
+        </div>
+    </aside>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div><h3>FarmIntel Pro</h3><p>Real-time data for modern farmers.</p></div>
+        <div class="footer-links">
+            <h3>Legal</h3>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Contact Us</a>
+        </div>
+    </div>
+    <div style="text-align: center; border-top: 1px solid #37474f; padding-top: 20px; margin-top: 20px; font-size: 0.8rem;">
+        &copy; 2025 FarmIntel Pro.
+    </div>
+</footer>
+
+<script>
+    let lang = 'en';
+    const uiTexts = {
+        en: { t_finance: "Quick Profit Analysis", l_area: "Land Area (Acres)", l_crop: "Crop", l_net: "Net Profit", btn_pdf: "Download Report", t_contact: "✉️ Expert Advice" },
+        hi: { t_finance: "त्वरित लाभ विश्लेषण", l_area: "भूमि क्षेत्र (एकड़)", l_crop: "फसल", l_net: "शुद्ध लाभ", btn_pdf: "रिपोर्ट डाउनलोड करें", t_contact: "✉️ विशेषज्ञ सलाह" }
+    };
+
+    function toggleLang() {
+        lang = lang === 'en' ? 'hi' : 'en';
+        const t = uiTexts[lang];
+        document.getElementById('t-finance').innerText = t.t_finance;
+        document.getElementById('l-area').innerText = t.l_area;
+        document.getElementById('l-crop').innerText = t.l_crop;
+        document.getElementById('l-net').innerText = t.l_net;
+        document.getElementById('btn-pdf').innerText = t.btn_pdf;
+        document.getElementById('t-contact').innerText = t.t_contact;
+        calculate();
+    }
+
+    function calculate() {
+        const acres = parseFloat(document.getElementById('acres').value) || 0;
+        const crop = document.getElementById('crop').value;
+        const cropMap = { maize: 25000, rice: 30000 };
+        document.getElementById('res-net').innerText = "₹" + (acres * cropMap[crop]).toLocaleString();
+    }
+
+    function exportPDF() {
+        const element = document.getElementById('capture-area');
+        html2pdf().from(element).save('Farm_Plan.pdf');
+    }
+    calculate();
+</script>
+</body>
+</html>
