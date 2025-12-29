@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmIntel Pro | Master Agriculture Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #1b5e20; --secondary: #2e7d32; --loan: #f57c00; --soil: #795548; --bg: #f0f4f0; --white: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; line-height: 1.5; }
+        
+        header { background: var(--white); border-bottom: 1px solid #ddd; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .lang-toggle { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+        
+        .main-container { max-width: 1100px; margin: 0 auto; padding: 15px; display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+        @media (max-width: 900px) { .main-container { grid-template-columns: 1fr; } }
+
+        .card { background: var(--white); border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid var(--primary); }
+        .card-soil { border-top-color: var(--soil); }
+        .card-loan { border-top-color: var(--loan); }
+        .card-converter { border-top-color: #2196f3; background: #e3f2fd; }
+
+        h2 { font-size: 1.1rem; color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .result-box { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 15px 0; }
+        .conv-res { font-size: 0.9rem; font-weight: bold; color: #1565c0; display: block; margin-top: -10px; margin-bottom: 10px; }
+
+        .btn-pdf { background: #222; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        footer { background: #1a1a1a; color: #ccc; padding: 30px; text-align: center; font-size: 0.8rem; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="#" class="logo">🌾 FarmIntel Pro</a>
+    <button class="lang-toggle" onclick="toggleLanguage()">हिन्दी / English</button>
+</header>
+
+<div class="main-container">
+    <div id="report-content">
+        
+        <div class="card card-converter">
+            <h2 id="h-conv">🔄 Area Unit Converter</h2>
+            <div class="grid-2">
+                <div>
+                    <label id="l-cval">Value</label>
+                    <input type="number" id="convInput" value="1" oninput="runLogic()">
+                </div>
+                <div>
+                    <label id="l-cunit">From Unit</label>
+                    <select id="convUnit" onchange="runLogic()">
+                        <option value="acre">Acres</option>
+                        <option value="hectare">Hectares</option>
+                        <option value="bigha">Bighas</option>
+                        <option value="guntha">Guntha</option>
+                        <option value="sqm">Sq. Meters</option>
+                    </select>
+                </div>
+            </div>
+            <span class="conv-res" id="convDetail">Converted to Acres for calculations</span>
+        </div>
+
+        <div class="card card-soil">
+            <h2 id="h-soil">🧪 Soil Health Diagnosis</h2>
+            <div class="grid-2">
+                <div>
+                    <label>pH Level</label>
+                    <input type="number" id="ph" value="6.5" step="0.1" oninput="runLogic()">
+                </div>
+                <div>
+                    <label id="l-crop">Crop</label>
+                    <select id="cropType" onchange="runLogic()">
+                        <option value="maize">Maize</option>
+                        <option value="wheat">Wheat</option>
+                        <option value="rice">Rice</option>
+                        <option value="tomato">Tomato</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-box" id="p-box">
+            <small id="l-net">NET PROFIT ESTIMATE</small>
+            <h1 id="netProfit" style="margin: 5px 0;">₹0</h1>
+            <span id="l-msg">Profitable Season</span>
+        </div>
+
+        <div class="card card-loan">
+            <h2 id="h-loan">🏦 Loan Eligibility</h2>
+            <label id="l-amt">Required Loan (₹)</label>
+            <input type="number" id="lAmt" value="50000" oninput="runLogic()">
+            <p id="l-emi">Monthly EMI: <b id="emiRes">₹0</b></p>
+        </div>
+
+        <button class="btn-pdf" id="b-pdf" onclick="savePDF()">📥 DOWNLOAD FULL REPORT</button>
+    </div>
+
+    <aside>
+        <div class="card">
+            <h2 id="h-con">✉️ Expert Advice</h2>
+            <form action="https://formspree.io/f/your-email@example.com" method="POST">
+                <input type="text" name="name" placeholder="Name" required>
+                <textarea name="msg" placeholder="Your Question" rows="3" required></textarea>
+                <button type="submit" class="btn-pdf" style="background:var(--primary)">Send Message</button>
+            </form>
+        </div>
+    </aside>
+</div>
+
+<footer>
+    <p>&copy; 2025 FarmIntel Pro | <a href="#" style="color:#81c784">Privacy Policy</a></p>
+</footer>
+
+<script>
+    let currentLang = 'en';
+    const crops = {
+        maize: { yield: 2500, cost: 35000, price: 22 },
+        wheat: { yield: 2000, cost: 30000, price: 24 },
+        rice: { yield: 2200, cost: 45000, price: 28 },
+        tomato: { yield: 12000, cost: 90000, price: 15 }
+    };
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'en' ? 'hi' : 'en';
+        updateUI();
+    }
+
+    function updateUI() {
+        const t = {
+            en: { hConv: "🔄 Area Unit Converter", hSoil: "🧪 Soil Health", hLoan: "🏦 Loan Planner", lNet: "NET PROFIT ESTIMATE", bPdf: "📥 DOWNLOAD REPORT", hCon: "✉️ Expert Advice" },
+            hi: { hConv: "🔄 भूमि इकाई परिवर्तक", hSoil: "🧪 मिट्टी का स्वास्थ्य", hLoan: "🏦 ऋण योजनाकार", lNet: "अनुमानित शुद्ध लाभ", bPdf: "📥 रिपोर्ट डाउनलोड करें", hCon: "✉️ विशेषज्ञ सलाह" }
+        };
+        const cur = t[currentLang];
+        document.getElementById('h-conv').innerText = cur.hConv;
+        document.getElementById('h-soil').innerText = cur.hSoil;
+        document.getElementById('h-loan').innerText = cur.hLoan;
+        document.getElementById('l-net').innerText = cur.lNet;
+        document.getElementById('b-pdf').innerText = cur.bPdf;
+        document.getElementById('h-con').innerText = cur.hCon;
+        runLogic();
+    }
+
+    function runLogic() {
+        // UNIT CONVERSION LOGIC
+        const val = parseFloat(document.getElementById('convInput').value) || 0;
+        const unit = document.getElementById('convUnit').value;
+        let acres = 0;
+
+        if(unit === 'acre') acres = val;
+        else if(unit === 'hectare') acres = val * 2.471;
+        else if(unit === 'bigha') acres = val * 0.619;
+        else if(unit === 'guntha') acres = val * 0.025;
+        else if(unit === 'sqm') acres = val * 0.000247;
+
+        document.getElementById('convDetail').innerText = `Total: ${acres.toFixed(2)} Acres / एकड़`;
+
+        // PROFIT LOGIC
+        const c = crops[document.getElementById('cropType').value];
+        const profit = ((c.yield * c.price) - c.cost) * acres;
+        document.getElementById('netProfit').innerText = "₹" + Math.round(profit).toLocaleString();
+        document.getElementById('p-box').style.background = profit < 0 ? "#c62828" : "#1b5e20";
+
+        // EMI LOGIC
+        const P = parseFloat(document.getElementById('lAmt').value) || 0;
+        const emi = (P * 0.09) / 12; // 9% Interest
+        document.getElementById('emiRes').innerText = "₹" + Math.round(emi).toLocaleString();
+    }
+
+    function savePDF() {
+        const element = document.getElementById('report-content');
+        html2pdf().from(element).save('FarmIntel_Report.pdf');
+    }
+    updateUI();
+</script>
+</body>
+</html>
